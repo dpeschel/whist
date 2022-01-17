@@ -155,8 +155,9 @@ public class Whist extends CardGame {
             players[i].getHand().setTargetArea(new TargetArea(boardLocation.trickLocation));
             players[i].getHand().draw();
         }
-       /* for (int i = 1; i < nbPlayers; i++)  // This code can be used to visually hide the cards in a hand (make them face down)
-            hands[i].setVerso(true);*/
+        // visually hide the cards in a hand (make them face down)
+       for (int i = 1; i < nbPlayers; i++)
+            hands[i].setVerso(true);
         // End graphics
     }
 
@@ -285,7 +286,7 @@ public class Whist extends CardGame {
         Properties WhistProperties = new Properties();
         FileReader inStream = null;
         try {
-            inStream = new FileReader("Whist.properties");
+            inStream = new FileReader("whist.properties");
             WhistProperties.load(inStream);
         } finally {
             if (inStream != null) {
