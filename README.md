@@ -3,7 +3,7 @@
 ## About
 This is a practice project that improves my understanding of Java Programming, Object-oriented Programming, Software Design, Java Design Patterns and Team Work. 
 It aims to write a [_**whist game**_](https://en.wikipedia.org/wiki/Whist) based on a framework called [_**JCardGame**_](https://www.aplu.ch/home/apluhomex.jsp?site=91). 
-In the game, each player can be a human player, smart computer, naive computer or fool computer. There are Design Analysis and Static Design Diagram available to view in the report folder.
+In the game, each player can be a human player, smart computer, naive computer or fool computer. There are **Design Analysis** and **Static Design Diagram** available to view in the report folder.
 
 ## Features
 * Customise game configurations. The administrator can set up the number of cards, winning condition, level of intelligence of computer player, initial seed & if the game rule is enforced.
