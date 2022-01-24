@@ -14,7 +14,7 @@ In the game, each player can be a human player, smart computer, naive computer o
 ### Prerequisite
 IntelliJ/Eclipse
 
-### Start the game
+### Start The Game
 1. navigate to the folder of whist, right-click the folder & select < open folder as IntelliJ project >.
 2. Click the < file > button located at the top left of the window, then select < Project Structure > from the drop-down menu.
 3. In the popup window, choose SDK version 15, language level < 15 - text block >, then apply and click OK.  
