@@ -1,4 +1,8 @@
+/* TO DO when to call setTouchEnabled(true) and when false? */
+/* this code looks inefficient but it may actually be correct */
+
 import ch.aplu.jcardgame.*;
+import java.util.ArrayList;
 
 /**
  * the human strategy class
@@ -42,10 +46,30 @@ public class HumanStrategy implements ISelectCard {
     @Override
     public Card selectCard(int position, Hand hand, Whist whist) {
         selected = null;
+        Boolean done = false;
+        ArrayList<Card> list;
+
         hand.setTouchEnabled(true);
 
         whist.setStatusText("Player " + position + " double-click on card to lead.");
-        while (null == selected) Whist.delay(100);
+        while (done == false) {
+            while (null == selected) Whist.delay(100);
+            if (whist.getLead() == null) {
+                // Leading; any card OK.
+                done=true;
+            } else {
+                list = hand.getCardsWithSuit(whist.getLead());
+                if (list.size() == 0 ||
+                    selected.getSuit() == whist.getLead()) {
+                    // No cards of suit, or following suit
+                    done=true;
+                } else {
+                    // Revoking (Cards of suit and not following suit)
+                    whist.setStatusText("You must follow suit. Player " + position + " double-click on card to lead.");
+                }
+            }
+        }
+        whist.setStatusText("");
         return selected;
     }
 }
