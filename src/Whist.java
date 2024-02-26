@@ -88,7 +88,6 @@ public class Whist extends CardGame {
     private final String[] playerConfiguration;
     private final int nbStartCards;
     private final int winningScore;
-    private boolean enforceRules;
     private Actor trumpsActor;
     private Player[] players;
     private Suit trumps;
@@ -210,14 +209,13 @@ public class Whist extends CardGame {
                     // Rule violation
                     String violation = "Follow rule broken by player " + nextPlayer + " attempting to play " + selected;
                     System.out.println(violation);
-                    if (enforceRules)
-                        try {
-                            throw (new BrokeRuleException(violation));
-                        } catch (BrokeRuleException e) {
-                            e.printStackTrace();
-                            System.out.println("A cheating player spoiled the game!");
-                            System.exit(0);
-                        }
+                    try {
+                        throw (new BrokeRuleException(violation));
+                    } catch (BrokeRuleException e) {
+                        e.printStackTrace();
+                        System.out.println("A cheating player spoiled the game!");
+                        System.exit(0);
+                    }
                 }
                 // End Check
                 selected.transfer(trick, true); // transfer to trick (includes graphic effect)
@@ -253,15 +251,13 @@ public class Whist extends CardGame {
      * @param playerConfiguration the type and seat location of the players
      * @param nbStartCards        number of cards on hand to play each round
      * @param winningScore        number of scores to win the game
-     * @param enforceRules        if breaking the rules is acceptable
      */
-    Whist(int seed, String[] playerConfiguration, int nbStartCards, int winningScore, boolean enforceRules) {
+    Whist(int seed, String[] playerConfiguration, int nbStartCards, int winningScore) {
         //initialisation
         super(700, 700, 30);
         this.seed = seed;
         this.nbStartCards = nbStartCards;
         this.winningScore = winningScore;
-        this.enforceRules = enforceRules;
         this.playerConfiguration = playerConfiguration;
         //run whist gun
         setTitle("Whist (V" + version + ") Constructed for UofM SWEN30006 with JGameGrid (www.aplu.ch)");
@@ -296,10 +292,9 @@ public class Whist extends CardGame {
         int seed = Integer.parseInt(WhistProperties.getProperty("seed"));
         int nbStartCards = Integer.parseInt(WhistProperties.getProperty("nbStartCards"));
         int winningScore = Integer.parseInt(WhistProperties.getProperty("winningScore"));
-        boolean legalPlay = Boolean.parseBoolean(WhistProperties.getProperty("legalPlay"));
         String[] playerConfiguration = WhistProperties.getProperty("players").trim().split(";");
 
-        new Whist(seed, playerConfiguration, nbStartCards, winningScore, legalPlay);
+        new Whist(seed, playerConfiguration, nbStartCards, winningScore);
     }
 
 }
