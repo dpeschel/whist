@@ -52,10 +52,6 @@ class PlayerFactory {
             case "legal":
                 players[position] = new Player(hands[position], new LegalStrategy(), whist, position);
                 break;
-            /* create random player */
-            case "random":
-                players[position] = new Player(hands[position], new RandomStrategy(), whist, position);
-                break;
         }
     }
 }
