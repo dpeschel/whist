@@ -82,11 +82,17 @@ public class Whist extends CardGame {
     }
 
     final int thinkingTime = 2000;
+    // Only tested with 4.
     static final int nbPlayers = 4;
+    // Must be 1, 2, or 4.
+    static final int nbSides = 2;
+    // nbSides = 1, 2, 4 becomes playersPerSide = 4, 2, 1.
+    static final int playersPerSide = nbPlayers/nbSides;
     private final String version = "1.0";
     private int seed;
     private final String[] playerConfiguration;
     private final int nbStartCards;
+    private final int bookTricks;
     private final int winningScore;
     private Actor trumpsActor;
     private Player[] players;
@@ -97,31 +103,145 @@ public class Whist extends CardGame {
     private final Deck deck = new Deck(Suit.values(), Rank.values(), "cover");
     private final String[] trumpImage = {"bigspade.gif", "bigheart.gif", "bigdiamond.gif", "bigclub.gif"};
     private Actor[] scoreActors = {null, null, null, null};
-    private int[] scores = new int[nbPlayers];
+    private int[] tricks = new int[nbPlayers];
+    private int[] scores = new int[nbSides];
     Font bigFont = new Font("Serif", Font.BOLD, 36);
     public final RandomSelection random = new RandomSelection(seed);
 
-
     /**
-     * initialise players' score, and display them in the game board
+     * Initialize all players' trick scores and all sides' odd-trick scores.
+     * Display them in the game board.
      */
     private void initScore() {
-        for (int i = 0; i < nbPlayers; i++) {
+        for (int i = 0; i < nbSides; i++) {
             scores[i] = 0;
-            scoreActors[i] = new TextActor("0", Color.WHITE, bgColor, bigFont);
+        }
+        for (int i = 0; i < nbPlayers; i++) {
+            tricks[i] = 0;
+            if (i < nbSides) {
+                scoreActors[i] = new TextActor("0+0", Color.WHITE, bgColor, bigFont);
+            } else {
+                scoreActors[i] = new TextActor("0", Color.WHITE, bgColor, bigFont);
+            }
             addActor(scoreActors[i], boardLocation.scoreLocations[i]);
         }
     }
 
     /**
-     * update player's score
+     * Redisplay one player's trick score.
+     * Call this during a hand after the player takes a trick.
      *
      * @param player the winning player of a trick
      */
-    private void updateScore(int player) {
+    private void updateTrick(int player) {
+        int side = player%nbSides;
+        String str;
+        if (player < nbSides) {
+            str = String.valueOf(scores[side]).
+                         concat("+").
+                         concat(String.valueOf(tricks[player]));
+        } else {
+            str = String.valueOf(tricks[player]);
+        }
         removeActor(scoreActors[player]);
-        scoreActors[player] = new TextActor(String.valueOf(scores[player]), Color.WHITE, bgColor, bigFont);
+        scoreActors[player] = new TextActor(str, Color.WHITE, bgColor, bigFont);
         addActor(scoreActors[player], boardLocation.scoreLocations[player]);
+    }
+
+    /**
+     * Add all players' scores (at or above bookTricks) to their sides' tricks.
+     * Clear their scores.
+     * Call this at the end of a hand.
+     */
+    private void scoreOddTricks() {
+        int[] totalTrickScores = new int[nbSides];
+        for (int i = 0; i < nbSides; i++) {
+            totalTrickScores[i] = 0;
+        }
+        for (int i = 0; i < nbPlayers; i++) {
+            int side = i%nbSides;
+            totalTrickScores[side] += tricks[i];
+            System.out.format("tricks: i=%d side=%d tricks=%d new total=%d\n",
+                i, side, tricks[i], totalTrickScores[side]);
+        }
+        for (int i = 0; i < nbSides; i++) {
+            if (i==0) System.out.format("scores: bookTricks=%d\n", bookTricks);
+            if (totalTrickScores[i] >= bookTricks) {
+                scores[i] += totalTrickScores[i] - bookTricks;
+                System.out.format("scores: i=%d total=%d new score=%d\n",
+                    i, totalTrickScores[i] - bookTricks, scores[i]);
+            }
+        }
+        for (int i = 0; i < nbPlayers; i++) {
+            tricks[i] = 0;
+        }
+        System.out.println("");
+    }
+
+    /**
+     * Redisplay all players' trick scores and all sides' odd-trick scores.
+     * Call this at the end of a hand.
+     */
+    private void updateScores() {
+        String str;
+        for (int i = 0; i < nbPlayers; i++) {
+            if (i < nbSides) {
+                str = String.valueOf(scores[i]).
+                             concat("+").
+                             concat(String.valueOf(tricks[i]));
+            } else {
+                str = String.valueOf(tricks[i]);
+            }
+            removeActor(scoreActors[i]);
+            scoreActors[i] = new TextActor(str, Color.WHITE, bgColor, bigFont);
+            addActor(scoreActors[i], boardLocation.scoreLocations[i]);
+        }
+    }
+
+    /**
+     * Determine the winning side, if any.
+     * Exactly one side must have winningScore or more points.
+     * Call this at the end of a hand.
+     *
+     * @return the winning side, or empty if no side or if tie
+     */
+    private Optional<Integer> findWinner() {
+        // Determine the winner of the game if any. If nbStartCards is even
+        // then two sides can score in the same hand, so after a few hands
+        // two sides could have the same score at or above the winning score.
+        // Handle this case by requiring _one_ side to score the most to win
+        // (no ties).
+        int winningSide = -1;
+        int maxScore = -1;
+        for (int i = 0; i < nbSides; i++) {
+            if (scores[i] >= winningScore) {
+                if (scores[i] > maxScore) {
+                    maxScore = scores[i];
+                    winningSide = i;
+                }
+            } else if (scores[i] == maxScore) {
+                winningSide = -1;
+            }
+        }
+        // TO DO
+        // test with winningScore==0 (that's why the -1 sentinel values)
+        // if no side is at or above the winning score, then no side won
+        // if one side is at or above the winning score, then that side
+        //  won -- also set maxScore
+        // if a later side has a higher score, above the winning score,
+        //  then increase maxScore
+        // if a later side has _the same score_, above the winning score,
+        //  then set winningSide back to -1 and maxScore back to 0
+        // (actually you should avoid setting maxScore back to 0, in case
+        //  a later side has a higher score, above the winning score)
+        // test with 1, 2, and 4 sides
+
+        if (winningSide == -1) {
+            // No side won
+            return Optional.empty();
+        } else {
+            return Optional.of(winningSide);
+        }
     }
 
     /**
@@ -219,13 +339,13 @@ public class Whist extends CardGame {
                 }
                 // End Check
                 selected.transfer(trick, true); // transfer to trick (includes graphic effect)
-                System.out.println("winning: suit = " + winningCard.getSuit() + ", rank = " + winningCard.getRankId());
-                System.out.println(" played: suit = " + selected.getSuit() + ", rank = " + selected.getRankId());
+                //System.out.println("winning: suit = " + winningCard.getSuit() + ", rank = " + winningCard.getRankId());
+                //System.out.println(" played: suit = " + selected.getSuit() + ", rank = " + selected.getRankId());
                 if ( // beat current winner with higher card
                         (selected.getSuit() == winningCard.getSuit() && rankGreater(selected, winningCard)) ||
                                 // trumped when non-trump was winning
                                 (selected.getSuit() == trumps && winningCard.getSuit() != trumps)) {
-                    System.out.println("NEW WINNER");
+                    //System.out.println("NEW WINNER");
                     winner = nextPlayer;
                     winningCard = selected;
                 }
@@ -236,12 +356,14 @@ public class Whist extends CardGame {
             trick.draw();
             nextPlayer = winner;
             setStatusText("Player " + nextPlayer + " wins trick.");
-            scores[nextPlayer]++;
-            updateScore(nextPlayer);
-            if (winningScore == scores[nextPlayer]) return Optional.of(nextPlayer);
+            tricks[winner]++;
+            updateTrick(winner);
         }
+        // The hand is finished.
+        scoreOddTricks();
+        updateScores();
         removeActor(trumpsActor);
-        return Optional.empty();
+        return findWinner();
     }
 
     /**
@@ -250,13 +372,14 @@ public class Whist extends CardGame {
      * @param seed                the seed of random object
      * @param playerConfiguration the type and seat location of the players
      * @param nbStartCards        number of cards on hand to play each round
-     * @param winningScore        number of scores to win the game
+     * @param winningScore        number of odd-trick points to win the game
      */
     Whist(int seed, String[] playerConfiguration, int nbStartCards, int winningScore) {
         //initialisation
         super(700, 700, 30);
         this.seed = seed;
         this.nbStartCards = nbStartCards;
+        this.bookTricks = nbStartCards/2;
         this.winningScore = winningScore;
         this.playerConfiguration = playerConfiguration;
         //run whist gun
